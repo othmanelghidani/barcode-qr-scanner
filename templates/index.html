@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode & QR Scanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="page">
+        <aside class="sidebar">
+            <div class="brand-card">
+                <div class="logo-box">CV</div>
+                <div>
+                    <h1>Barcode & QR Scanner</h1>
+                    <p>Projet 3 — Computer Vision</p>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Importer une image</h2>
+                <form method="POST" enctype="multipart/form-data" class="scan-form">
+                    <label class="upload-box">
+                        <span>Choisir une image</span>
+                        <input type="file" name="image" accept="image/*" required>
+                    </label>
+
+                    <label class="mode-label">Mode de détection</label>
+                    <select name="mode" class="select-input">
+                        <option value="qr" {% if selected_mode == 'qr' %}selected{% endif %}>QR Code</option>
+                        <option value="barcode" {% if selected_mode == 'barcode' %}selected{% endif %}>Barcode</option>
+                    </select>
+
+                    <button type="submit" class="scan-btn">Scanner</button>
+                </form>
+            </div>
+
+            <div class="panel small-panel">
+                <h2>Pipeline</h2>
+                <p>QR : grayscale, blur, contours, détection, décodage.</p>
+                <p>Barcode : grayscale, Sobel X, threshold, morphology, contour, bounding box.</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="hero-card">
+                <div>
+                    <h2>Résultats de détection</h2>
+                    <p>Chargez une image, choisissez le mode puis lancez l’analyse.</p>
+                </div>
+                <div class="status-pill">
+                    {% if result_text %}
+                        Analyse terminée
+                    {% else %}
+                        En attente
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <section class="panel preview-panel">
+                    <h2>Image d’origine</h2>
+                    {% if uploaded_image %}
+                        <img src="{{ url_for('upload_file', filename=uploaded_image) }}" alt="Image d'origine" class="result-img">
+                    {% else %}
+                        <div class="empty-box">Aucune image importée</div>
+                    {% endif %}
+                </section>
+
+                <section class="panel preview-panel">
+                    <h2>Image annotée</h2>
+                    {% if result_image %}
+                        <img src="{{ url_for('result_file', filename=result_image) }}" alt="Image annotée" class="result-img">
+                    {% else %}
+                        <div class="empty-box">Aucun résultat disponible</div>
+                    {% endif %}
+                </section>
+            </div>
+
+            <section class="panel results-panel">
+                <h2>Résultat</h2>
+
+                {% if result_text %}
+                    <div class="result-message">{{ result_text }}</div>
+                {% else %}
+                    <div class="empty-box">Le résultat s’affichera ici après le scan.</div>
+                {% endif %}
+
+                {% if qr_link %}
+                    <div class="link-box">
+                        <span>Lien détecté :</span>
+                        <a href="{{ qr_link }}" target="_blank" rel="noreferrer">{{ qr_link }}</a>
+                    </div>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</body>
+</html>
