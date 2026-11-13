@@ -38,7 +38,7 @@
             <div class="panel small-panel">
                 <h2>Pipeline</h2>
                 <p>QR : grayscale, blur, contours, détection, décodage.</p>
-                <p>Barcode : grayscale, Sobel X, threshold, morphology, contour, bounding box.</p>
+                <p>Barcode : grayscale, Sobel X, threshold, morphology, contour, bounding box, décodage.</p>
             </div>
         </aside>
 
@@ -81,7 +81,7 @@
                 <h2>Résultat</h2>
 
                 {% if result_text %}
-                    <div class="result-message">{{ result_text }}</div>
+                    <div class="result-message" style="white-space: pre-line;">{{ result_text }}</div>
                 {% else %}
                     <div class="empty-box">Le résultat s’affichera ici après le scan.</div>
                 {% endif %}

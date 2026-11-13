@@ -1,9 +1,14 @@
-@"
 venv/
 env/
+.venv/
 __pycache__/
 *.pyc
+.ipynb_checkpoints/
+
+# Runtime folders (user uploads and generated results)
 uploads/
 results/
-.ipynb_checkpoints/
-"@ | Out-File .gitignore
+
+.env
+.DS_Store
+Thumbs.db

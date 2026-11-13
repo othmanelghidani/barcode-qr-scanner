@@ -1,0 +1,7 @@
+flask>=3.0
+opencv-python>=4.8
+numpy>=1.24
+# notebook only
+matplotlib>=3.7
+ipywidgets>=8.0
+jupyter>=1.0

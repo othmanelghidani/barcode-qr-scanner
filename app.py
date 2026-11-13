@@ -58,17 +58,22 @@ def detect_barcode(image_path, result_path):
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # Gradient horizontal pour faire ressortir les barres verticales
     grad_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
     grad_x = cv2.convertScaleAbs(grad_x)
 
+    # Binarisation
     _, thresh = cv2.threshold(grad_x, 50, 255, cv2.THRESH_BINARY)
 
+    # Fermeture morphologique pour relier les barres
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 7))
     closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
+    # Nettoyage
     closed = cv2.erode(closed, None, iterations=1)
     closed = cv2.dilate(closed, None, iterations=2)
 
+    # Recherche des contours
     contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     output = image.copy()
@@ -81,6 +86,7 @@ def detect_barcode(image_path, result_path):
         area = w * h
         ratio = w / float(h) if h != 0 else 0
 
+        # Filtres géométriques
         if area < 0.03 * image_area:
             continue
         if ratio < 1.2:
@@ -105,8 +111,78 @@ def detect_barcode(image_path, result_path):
             2
         )
 
+        decoded_text = None
+
+        try:
+            detector = cv2.barcode_BarcodeDetector()
+
+            # 1) Essai de décodage sur l'image entière
+            result = detector.detectAndDecode(image)
+            decoded_info = None
+
+            if isinstance(result, tuple):
+                if len(result) == 3:
+                    decoded_info, _, _ = result
+                elif len(result) == 4:
+                    _, decoded_info, _, _ = result
+
+            if decoded_info is not None and decoded_info != "":
+                if isinstance(decoded_info, (list, tuple)):
+                    if len(decoded_info) > 0 and str(decoded_info[0]).strip() != "":
+                        decoded_text = str(decoded_info[0])
+                else:
+                    if str(decoded_info).strip() != "":
+                        decoded_text = str(decoded_info)
+
+            # 2) Si échec, essai sur la ROI détectée
+            if not decoded_text:
+                roi = image[y:y + h, x:x + w]
+                result = detector.detectAndDecode(roi)
+                decoded_info = None
+
+                if isinstance(result, tuple):
+                    if len(result) == 3:
+                        decoded_info, _, _ = result
+                    elif len(result) == 4:
+                        _, decoded_info, _, _ = result
+
+                if decoded_info is not None and decoded_info != "":
+                    if isinstance(decoded_info, (list, tuple)):
+                        if len(decoded_info) > 0 and str(decoded_info[0]).strip() != "":
+                            decoded_text = str(decoded_info[0])
+                    else:
+                        if str(decoded_info).strip() != "":
+                            decoded_text = str(decoded_info)
+
+        except Exception:
+            decoded_text = None
+
+        if decoded_text:
+            text_y = y + h + 30
+            if text_y >= output.shape[0]:
+                text_y = max(30, y - 15)
+
+            cv2.putText(
+                output,
+                f"Decoded: {decoded_text}",
+                (x, text_y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 0, 0),
+                2
+            )
+
+            cv2.imwrite(result_path, output)
+            return (
+                f"Barcode localisé : x={x}, y={y}, w={w}, h={h}, ratio={ratio:.2f}\n"
+                f"Barcode décodé : {decoded_text}"
+            ), decoded_text
+
         cv2.imwrite(result_path, output)
-        return f"Barcode localisé : x={x}, y={y}, w={w}, h={h}, ratio={ratio:.2f}", None
+        return (
+            f"Barcode localisé : x={x}, y={y}, w={w}, h={h}, ratio={ratio:.2f}\n"
+            f"Décodage impossible"
+        ), None
 
     cv2.imwrite(result_path, output)
     return "Aucun barcode détecté", None
